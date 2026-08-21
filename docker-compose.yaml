@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: pgdb
+    restart: unless-stopped
+    volumes:
+      - pgdb_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=games_db
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdb_data:
