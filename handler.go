@@ -9,6 +9,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func WriteJsonResponse(w http.ResponseWriter, status int, message string) {
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(&JsonErr{Error: message})
+}
+
 func CreateGameHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -16,8 +21,7 @@ func CreateGameHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := json.NewDecoder(r.Body).Decode(&game); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(&JsonErr{Error: "unable to create a game, please check your data"})
+		WriteJsonResponse(w, http.StatusBadRequest, "unable to create a game, please check your data")
 		return
 	}
 
@@ -35,8 +39,7 @@ func CreateGameHandler(w http.ResponseWriter, r *http.Request) {
 	).Scan(&lastInsertID)
 
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(&JsonErr{Error: "unable to write to database: " + err.Error()})
+		WriteJsonResponse(w, http.StatusBadRequest, "unable to write to database: "+err.Error())
 		return
 	}
 
@@ -54,10 +57,7 @@ func CreateGameHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(
-			&JsonErr{Error: "Unable to read from the database: " + err.Error()},
-		)
+		WriteJsonResponse(w, http.StatusInternalServerError, "unable to read from the database: "+err.Error())
 		return
 	}
 
@@ -77,8 +77,7 @@ func RetrieveGameHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(&JsonErr{Error: fmt.Sprintf("a game with ID %s does not exist", id)})
+		WriteJsonResponse(w, http.StatusNotFound, fmt.Sprintf("a game with ID %s does not exist", id))
 		return
 	}
 
@@ -103,10 +102,7 @@ func UpdateGameHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(
-			&JsonErr{Error: fmt.Sprintf("unable to find a game with ID: ", id) + err.Error()},
-		)
+		WriteJsonResponse(w, http.StatusNotFound, fmt.Sprintf("unable to find a game with ID: %s", id)+err.Error())
 		return
 	}
 
@@ -117,10 +113,7 @@ func UpdateGameHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err = json.NewDecoder(r.Body).Decode(&game)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(
-			&JsonErr{Error: "unable to process your JSON" + err.Error()},
-		)
+		WriteJsonResponse(w, http.StatusBadRequest, "unable to process your JSON "+err.Error())
 		return
 	}
 
@@ -140,10 +133,7 @@ func UpdateGameHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(
-			&JsonErr{Error: "Something went wrong during update" + err.Error()},
-		)
+		WriteJsonResponse(w, http.StatusInternalServerError, "Something went wrong during update "+err.Error())
 		return
 	}
 
@@ -161,10 +151,7 @@ func DeleteGameHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(
-			&JsonErr{Error: fmt.Sprintf("unable to find a game with ID: %s", id) + err.Error()},
-		)
+		WriteJsonResponse(w, http.StatusNotFound, fmt.Sprintf("unable to find a game with ID: %s", id)+err.Error())
 		return
 	}
 
@@ -176,8 +163,7 @@ func RetrieveGamesHandler(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.Query("SELECT g.id, g.title, g.console, g.rating, g.completed, g.created, g.updated FROM games g ORDER BY g.id")
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(&JsonErr{Error: "unable to retrieve games at this moment"})
+		WriteJsonResponse(w, http.StatusInternalServerError, "unable to retrieve games at this moment")
 		return
 	}
 
